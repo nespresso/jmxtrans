@@ -87,7 +87,7 @@ public class JmxTransformer implements WatchedCallback {
 
 	private volatile boolean isRunning = false;
 
-	/** */
+    /** */
 	public static void main(String[] args) throws Exception {
 		JmxTransformer transformer = new JmxTransformer();
 
@@ -484,52 +484,54 @@ public class JmxTransformer implements WatchedCallback {
 		return continueOnJsonError;
 	}
 
-	/**
-	 * Parse the options given on the command line.
-	 */
-	private boolean parseOptions(String[] args) throws OptionsException, org.apache.commons.cli.ParseException {
-		CommandLineParser parser = new GnuParser();
-		CommandLine cl = parser.parse(this.getOptions(), args);
-		Option[] options = cl.getOptions();
+    /**
+     * Parse the options given on the command line.
+     */
+    private boolean parseOptions(String[] args) throws OptionsException, org.apache.commons.cli.ParseException {
+        CommandLineParser parser = new GnuParser();
+        CommandLine cl = parser.parse(this.getOptions(), args);
+        Option[] options = cl.getOptions();
 
-		boolean result = true;
+        boolean result = true;
 
-		for (Option option : options) {
-			if (option.getOpt().equals("c")) {
-				this.setContinueOnJsonError(Boolean.parseBoolean(option.getValue()));
-			} else if (option.getOpt().equals("j")) {
-				File tmp = new File(option.getValue());
-				if (!tmp.exists() && !tmp.isDirectory()) {
-					throw new OptionsException("Path to json directory is invalid: " + tmp);
-				}
-				this.setJsonDirOrFile(tmp);
-			} else if (option.getOpt().equals("f")) {
-				File tmp = new File(option.getValue());
-				if (!tmp.exists() && !tmp.isFile()) {
-					throw new OptionsException("Path to json file is invalid: " + tmp);
-				}
-				this.setJsonDirOrFile(tmp);
-			} else if (option.getOpt().equals("e")) {
-				this.setRunEndlessly(true);
-			} else if (option.getOpt().equals("q")) {
-				this.setQuartPropertiesFile(option.getValue());
-				File file = new File(option.getValue());
-				if (!file.exists()) {
-					throw new OptionsException("Could not find path to the quartz properties file: " + file.getAbsolutePath());
-				}
-			} else if (option.getOpt().equals("s")) {
-				this.setRunPeriod(Integer.valueOf(option.getValue()));
-			} else if (option.getOpt().equals("h")) {
-				HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp("java -jar jmxtrans-all.jar", this.getOptions());
-				result = false;
-			}
-		}
-		if ((result == true) && (this.getJsonDirOrFile() == null)) {
-			throw new OptionsException("Please specify either the -f or -j option.");
-		}
-		return result;
-	}
+        for (Option option : options) {
+            if (option.getOpt().equals("c")) {
+                this.setContinueOnJsonError(Boolean.parseBoolean(option.getValue()));
+            } else if (option.getOpt().equals("j")) {
+                File tmp = new File(option.getValue());
+                if (!tmp.exists() && !tmp.isDirectory()) {
+                    throw new OptionsException("Path to json directory is invalid: " + tmp);
+                }
+                this.setJsonDirOrFile(tmp);
+            } else if (option.getOpt().equals("f")) {
+                File tmp = new File(option.getValue());
+                if (!tmp.exists() && !tmp.isFile()) {
+                    throw new OptionsException("Path to json file is invalid: " + tmp);
+                }
+                this.setJsonDirOrFile(tmp);
+            } else if (option.getOpt().equals("e")) {
+                this.setRunEndlessly(true);
+            } else if (option.getOpt().equals("q")) {
+                this.setQuartPropertiesFile(option.getValue());
+                File file = new File(option.getValue());
+                if (!file.exists()) {
+                    throw new OptionsException("Could not find path to the quartz properties file: " + file.getAbsolutePath());
+                }
+            } else if (option.getOpt().equals("s")) {
+                this.setRunPeriod(Integer.valueOf(option.getValue()));
+            } else if (option.getOpt().equals("d")) {
+                JmxUtils.allowDottedKeys();
+            } else if (option.getOpt().equals("h")) {
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp("java -jar jmxtrans-all.jar", this.getOptions());
+                result = false;
+            }
+        }
+        if ((result == true) && (this.getJsonDirOrFile() == null)) {
+            throw new OptionsException("Please specify either the -f or -j option.");
+        }
+        return result;
+    }
 
 	/** */
 	public Options getOptions() {
@@ -540,6 +542,7 @@ public class JmxTransformer implements WatchedCallback {
 		options.addOption("e", false, "Run endlessly. Default false.");
 		options.addOption("q", true, "Path to quartz configuration file.");
 		options.addOption("s", true, "Seconds between server job runs (not defined with cron). Default: 60");
+        options.addOption("d", false, "Dotted keys: do not squash dots (.) in JMX keys.");
 		options.addOption("h", false, "Help");
 		return options;
 	}
@@ -673,7 +676,7 @@ public class JmxTransformer implements WatchedCallback {
 		}
 	}
 
-	protected class ShutdownHook extends Thread {
+    protected class ShutdownHook extends Thread {
 		public void run() {
 			try {
 				JmxTransformer.this.stopServices();
