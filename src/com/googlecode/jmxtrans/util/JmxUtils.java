@@ -70,7 +70,9 @@ public class JmxUtils {
 
     /**
      *  Switch to permissive mode:
-     *  Keep the dots in keys retrieved from the server(s) intact.
+     *  Keep the dots in keys retrieved from the JMX server(s) intact.
+     *
+     *  WARNING: This may cause problem with the Nagios writer. The Nagios writer splits keys on dots '.'.
      *
      *  [Having this configuration is pushing the definition of a static helper a bit, we know.
      *  This is all for the sake of simplicity, and not changing too many things.]
@@ -650,76 +652,83 @@ public class JmxUtils {
 	 * @return the key string
 	 */
 	public static String getKeyString(Query query, Result result, Entry<String, Object> values, List<String> typeNames, String rootPrefix) {
-		String keyStr = null;
-		if (values.getKey().startsWith(result.getAttributeName())) {
-			keyStr = values.getKey();
-		} else {
-			keyStr = result.getAttributeName() + "." + values.getKey();
-		}
-
-		String alias = null;
-		if (query.getServer().getAlias() != null) {
-			alias = query.getServer().getAlias();
-		} else {
-			alias = query.getServer().getHost() + "_" + query.getServer().getPort();
-			alias = cleanupStr(alias);
-		}
-
 		StringBuilder sb = new StringBuilder();
-		if (rootPrefix != null) {
-			sb.append(rootPrefix);
-			sb.append(".");
-		}
-		sb.append(alias);
+        addRootPrefix(rootPrefix, sb);
+        addAlias(query, sb);
 		sb.append(".");
-
 		// Allow people to use something other than the classname as the output.
-		if (result.getClassNameAlias() != null) {
-			sb.append(result.getClassNameAlias());
-		} else {
-			sb.append(cleanupStr(result.getClassName()));
-		}
-
-		sb.append(".");
-
-		String typeName = cleanupStr(getConcatedTypeNameValues(query, typeNames, result.getTypeName()));
-		if (typeName != null && typeName.length() > 0) {
-			sb.append(typeName);
-			sb.append(".");
-		}
-		sb.append(cleanupStr(keyStr));
-
+        addClassName(result, sb);
+        sb.append(".");
+        addTypeName(query, result, typeNames, sb);
+        addKeyString(result, values, sb);
 		return sb.toString();
 	}
 
-	public static String getKeyString2(Query query, Result result, Entry<String, Object> values, List<String> typeNames, String rootPrefix) {
-		String keyStr = null;
-		if (values.getKey().startsWith(result.getAttributeName())) {
-			keyStr = values.getKey();
-		} else {
-			keyStr = result.getAttributeName() + "." + values.getKey();
-		}
+    /**
+     * Gets the key string, special edition for GangliaWriter
+     *
+     * @param query
+     *            the query
+     * @param result
+     *            the result
+     * @param values
+     *            the values
+     * @param typeNames
+     *            the type names
+     * @return the key string
+     */
+    public static String getKeyStringGanglia(Query query, Result result, Entry<String, Object> values, List<String> typeNames) {
+        StringBuilder sb = new StringBuilder();
+        addClassName(result, sb);
+        sb.append(".");
+        addTypeName(query, result, typeNames, sb);
+        addKeyString(result, values, sb);
+        return sb.toString();
+    }
 
-		StringBuilder sb = new StringBuilder();
+    private static void addRootPrefix(String rootPrefix, StringBuilder sb) {
+        if (rootPrefix != null) {
+            sb.append(rootPrefix);
+            sb.append(".");
+        }
+    }
 
-		// Allow people to use something other than the classname as the output.
-		if (result.getClassNameAlias() != null) {
-			sb.append(result.getClassNameAlias());
-		} else {
-			sb.append(cleanupStr(result.getClassName()));
-		}
+    private static void addAlias(Query query, StringBuilder sb) {
+        String alias;
+        if (query.getServer().getAlias() != null) {
+            alias = query.getServer().getAlias();
+        } else {
+            alias = query.getServer().getHost() + "_" + query.getServer().getPort();
+            alias = cleanupStr(alias);
+        }
+        sb.append(alias);
+    }
 
-		sb.append(".");
+    private static void addClassName(Result result, StringBuilder sb) {
+        // Allow people to use something other than the classname as the output.
+        if (result.getClassNameAlias() != null) {
+            sb.append(result.getClassNameAlias());
+        } else {
+            sb.append(cleanupStr(result.getClassName()));
+        }
+    }
 
-		String typeName = cleanupStr(getConcatedTypeNameValues(query, typeNames, result.getTypeName()));
-		if (typeName != null && typeName.length() > 0) {
-			sb.append(typeName);
-			sb.append(".");
-		}
-		sb.append(cleanupStr(keyStr));
+    private static void addTypeName(Query query, Result result, List<String> typeNames, StringBuilder sb) {
+        String typeName = cleanupStr(getConcatedTypeNameValues(query, typeNames, result.getTypeName()));
+        if (typeName != null && typeName.length() > 0) {
+            sb.append(typeName);sb.append(".");
+        }
+    }
 
-		return sb.toString();
-	}
+    private static void addKeyString(Result result, Entry<String, Object> values, StringBuilder sb) {
+        String keyStr;
+        if (values.getKey().startsWith(result.getAttributeName())) {
+            keyStr = values.getKey();
+        } else {
+            keyStr = result.getAttributeName() + "." + values.getKey();
+        }
+        sb.append(cleanupStr(keyStr));
+    }
 
     /**
      * Replaces all . and / with _ and removes all spaces and double/single quotes.
