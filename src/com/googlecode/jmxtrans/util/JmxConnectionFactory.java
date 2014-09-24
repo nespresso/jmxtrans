@@ -1,12 +1,11 @@
 package com.googlecode.jmxtrans.util;
 
-import java.io.IOException;
-
-import javax.management.remote.JMXConnector;
-
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.management.remote.JMXConnector;
+import java.io.IOException;
 
 import com.googlecode.jmxtrans.model.Server;
 
@@ -14,9 +13,6 @@ import com.googlecode.jmxtrans.model.Server;
  * Allows us to pool connections to remote jmx servers.
  */
 public class JmxConnectionFactory extends BaseKeyedPoolableObjectFactory {
-
-	@SuppressWarnings("unused")
-	private static final Logger log = LoggerFactory.getLogger(JmxConnectionFactory.class);
 
 	/** constructor */
 	public JmxConnectionFactory() {
@@ -49,7 +45,7 @@ public class JmxConnectionFactory extends BaseKeyedPoolableObjectFactory {
 		boolean result = false;
 		try {
 			conn.getConnectionId();
-            conn.getMBeanServerConnection().getMBeanCount();
+			conn.getMBeanServerConnection().getMBeanCount();
 			result = true;
 		} catch (IOException ex) {
 			// ignored

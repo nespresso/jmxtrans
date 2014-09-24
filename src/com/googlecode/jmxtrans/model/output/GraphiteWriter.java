@@ -1,11 +1,6 @@
 package com.googlecode.jmxtrans.model.output;
 
-import com.googlecode.jmxtrans.jmx.ManagedGenericKeyedObjectPool;
-import com.googlecode.jmxtrans.jmx.ManagedObject;
-import com.googlecode.jmxtrans.model.Query;
-import com.googlecode.jmxtrans.model.Result;
-import com.googlecode.jmxtrans.model.Server;
-import com.googlecode.jmxtrans.util.*;
+import com.google.common.base.Charsets;
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
@@ -13,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
@@ -24,6 +20,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import com.googlecode.jmxtrans.jmx.ManagedGenericKeyedObjectPool;
+import com.googlecode.jmxtrans.jmx.ManagedObject;
+import com.googlecode.jmxtrans.model.Query;
+import com.googlecode.jmxtrans.model.Result;
+import com.googlecode.jmxtrans.model.Server;
+import com.googlecode.jmxtrans.util.BaseOutputWriter;
+import com.googlecode.jmxtrans.util.JmxUtils;
+import com.googlecode.jmxtrans.util.LifecycleException;
+import com.googlecode.jmxtrans.util.NumberUtils;
+import com.googlecode.jmxtrans.util.SocketFactory;
+import com.googlecode.jmxtrans.util.ValidationException;
+
+import static com.google.common.base.Charsets.UTF_8;
 
 /**
  * This low latency and thread save output writer sends data to a host/port combination
@@ -144,7 +154,7 @@ public class GraphiteWriter extends BaseOutputWriter {
 		}
 
 		try {
-			PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+			PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), UTF_8), true);
 
 			List<String> typeNames = this.getTypeNames();
 
@@ -156,7 +166,7 @@ public class GraphiteWriter extends BaseOutputWriter {
 				if (resultValues != null) {
 					for (Entry<String, Object> values : resultValues.entrySet()) {
 						Object value = values.getValue();
-						if (JmxUtils.isNumeric(value)) {
+						if (NumberUtils.isNumeric(value)) {
 							StringBuilder sb = new StringBuilder();
 
 							sb.append(JmxUtils.getKeyString(query, result, values, typeNames, rootPrefix).replaceAll("[()]", "_"));

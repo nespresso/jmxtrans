@@ -1,5 +1,12 @@
 package com.googlecode.jmxtrans.model.output;
 
+import com.google.common.base.Charsets;
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,17 +24,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.googlecode.jmxtrans.model.Query;
 import com.googlecode.jmxtrans.model.Result;
 import com.googlecode.jmxtrans.util.BaseOutputWriter;
 import com.googlecode.jmxtrans.util.JmxUtils;
+import com.googlecode.jmxtrans.util.NumberUtils;
 import com.googlecode.jmxtrans.util.ValidationException;
+
+import static com.google.common.base.Charsets.ISO_8859_1;
 
 /**
  * <a href="https://www.stackdriver.com//">Stackdriver</a> implementation of the
@@ -68,7 +72,7 @@ public class StackdriverWriter extends BaseOutputWriter {
 	
 	public final static String SETTING_PROXY_PORT = "proxyPort";
 	
-    public final static String SETTING_PROXY_HOST = "proxyHost";
+	public final static String SETTING_PROXY_HOST = "proxyHost";
 	
 	public static final String SETTING_STACKDRIVER_API_KEY = "token";
 	
@@ -222,7 +226,7 @@ public class StackdriverWriter extends BaseOutputWriter {
 			Map<String, Object> values = metric.getValues();
 			if (values != null) {
 				for (Entry<String, Object> entry : values.entrySet()) {
-					if (JmxUtils.isNumeric(entry.getValue())) {
+					if (NumberUtils.isNumeric(entry.getValue())) {
 						// we have a numeric value, write a value into the message
 						
 						StringBuilder nameBuilder = new StringBuilder();
@@ -242,7 +246,7 @@ public class StackdriverWriter extends BaseOutputWriter {
 						}
 						
 						// Wildcard "typeNames" substitution
-						String typeName = JmxUtils.cleanupStr(JmxUtils.getConcatedTypeNameValues(typeNames, metric.getTypeName()));
+						String typeName = com.googlecode.jmxtrans.util.StringUtils.cleanupStr(JmxUtils.getConcatedTypeNameValues(typeNames, metric.getTypeName()));
 						if (typeName != null && typeName.length() > 0) {
 							nameBuilder.append(".");
 							nameBuilder.append(typeName);
@@ -321,7 +325,12 @@ public class StackdriverWriter extends BaseOutputWriter {
 			urlConnection.setRequestProperty("content-type", "application/json; charset=utf-8");
 			urlConnection.setRequestProperty("x-stackdriver-apikey", apiKey);
 
-			urlConnection.getOutputStream().write(gatewayMessage.getBytes());
+			// Stackdriver's own implementation does not specify char encoding
+			// to use. Let's take the simplest approach and at lest ensure that
+			// if we have problems they can be reproduced in consistant ways.
+			// See https://github.com/Stackdriver/stackdriver-custommetrics-java/blob/master/src/main/java/com/stackdriver/api/custommetrics/CustomMetricsPoster.java#L262
+			// for details.
+			urlConnection.getOutputStream().write(gatewayMessage.getBytes(ISO_8859_1));
 			
 			int responseCode = urlConnection.getResponseCode();
 			if (responseCode != 200 && responseCode != 201) {
@@ -363,8 +372,8 @@ public class StackdriverWriter extends BaseOutputWriter {
 			URLConnection metadataConnection = metadataUrl.openConnection();
 			// add any additional headers passed in
 			if (headers != null) {
-				for (String headerKey: headers.keySet()) {
-					metadataConnection.setRequestProperty(headerKey, headers.get(headerKey));
+				for (Map.Entry<String, String> header : headers.entrySet()) {
+					metadataConnection.setRequestProperty(header.getKey(), header.getValue());
 				}
 			}
 			BufferedReader in = new BufferedReader(new InputStreamReader(metadataConnection.getInputStream(), "UTF-8"));

@@ -23,7 +23,6 @@ JAR_FILE=${JAR_FILE:-"jmxtrans-all.jar"}
 JSON_DIR=${JSON_DIR:-"."}
 SECONDS_BETWEEN_RUNS=${SECONDS_BETWEEN_RUNS:-"60"}
 HARDKILL_THRESHOLD=${HARDKILL_THRESHOLD:-60}
-KEEP_DOTS_IN_KEYS=${KEEP_DOTS_IN_KEYS:-"false"}
 
 JPS=${JPS:-"${JAVA_HOME}/bin/jps -l"}
 USE_JPS=${USE_JPS:-"true"}
@@ -66,6 +65,11 @@ if [ "$CHECK_JAVA" == "true" ]; then
     fi
 fi
 
+if [ ! -f $JAR_FILE ]; then
+  echo "File not found - $JAR_FILE"
+  exit 1
+fi
+
 start() {
     if [ ! -z "$PIDFILE" ]; then
         if [ -r "$PIDFILE" ]; then
@@ -81,9 +85,9 @@ start() {
     fi
 
     if [ -z "$FILENAME" ]; then
-        EXEC=${EXEC:-"-jar $JAR_FILE -e -j $JSON_DIR -s $SECONDS_BETWEEN_RUNS -c $CONTINUE_ON_ERROR -d $KEEP_DOTS_IN_KEYS"}
+        EXEC=${EXEC:-"-jar $JAR_FILE -e -j $JSON_DIR -s $SECONDS_BETWEEN_RUNS -c $CONTINUE_ON_ERROR"}
     else
-        EXEC=${EXEC:-"-jar $JAR_FILE -e -f $FILENAME -s $SECONDS_BETWEEN_RUNS -c $CONTINUE_ON_ERROR -d $KEEP_DOTS_IN_KEYS"}
+        EXEC=${EXEC:-"-jar $JAR_FILE -e -f $FILENAME -s $SECONDS_BETWEEN_RUNS -c $CONTINUE_ON_ERROR"}
     fi
 
     nohup $JAVA -server $JAVA_OPTS $JMXTRANS_OPTS $GC_OPTS $MONITOR_OPTS $EXEC >>$LOG_FILE 2>&1 &

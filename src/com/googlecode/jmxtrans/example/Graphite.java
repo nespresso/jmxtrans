@@ -4,7 +4,7 @@ import com.googlecode.jmxtrans.model.JmxProcess;
 import com.googlecode.jmxtrans.model.Query;
 import com.googlecode.jmxtrans.model.Server;
 import com.googlecode.jmxtrans.model.output.GraphiteWriter;
-import com.googlecode.jmxtrans.util.JmxUtils;
+import com.googlecode.jmxtrans.util.JsonPrinter;
 
 /**
  * This class hits a Graphite server running on port 2003 and sends the memory
@@ -13,6 +13,8 @@ import com.googlecode.jmxtrans.util.JmxUtils;
  * @author jon
  */
 public class Graphite {
+
+	private static JsonPrinter printer = new JsonPrinter(System.out);
 
 	/** */
 	public static void main(String[] args) throws Exception {
@@ -31,7 +33,7 @@ public class Graphite {
 		server.addQuery(q);
 
 		JmxProcess process = new JmxProcess(server);
-		JmxUtils.prettyPrintJson(process);
+		printer.prettyPrint(process);
 		// JmxTransformer transformer = new JmxTransformer();
 		// transformer.executeStandalone(process);
 
