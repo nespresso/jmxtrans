@@ -6,7 +6,7 @@ import com.googlecode.jmxtrans.model.Query;
 import com.googlecode.jmxtrans.model.Server;
 import com.googlecode.jmxtrans.model.output.GraphiteWriter;
 import com.googlecode.jmxtrans.util.BaseOutputWriter;
-import com.googlecode.jmxtrans.util.JmxUtils;
+import com.googlecode.jmxtrans.util.JsonPrinter;
 
 /**
  * This example shows how to query an ActiveMQ server for some information.
@@ -20,6 +20,7 @@ import com.googlecode.jmxtrans.util.JmxUtils;
 public class ActiveMQ {
 
 	private static final String GW_HOST = "192.168.192.133";
+	private static JsonPrinter printer = new JsonPrinter(System.out);
 
 	/** */
 	public static void main(String[] args) throws Exception {
@@ -142,7 +143,7 @@ public class ActiveMQ {
 		server.addQuery(q9);
 
 		JmxProcess process = new JmxProcess(server);
-		JmxUtils.prettyPrintJson(process);
+		printer.prettyPrint(process);
 		JmxTransformer transformer = new JmxTransformer();
 		transformer.executeStandalone(process);
 

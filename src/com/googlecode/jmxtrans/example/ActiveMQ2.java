@@ -6,7 +6,7 @@ import com.googlecode.jmxtrans.model.Query;
 import com.googlecode.jmxtrans.model.Server;
 import com.googlecode.jmxtrans.model.output.RRDToolWriter;
 import com.googlecode.jmxtrans.util.BaseOutputWriter;
-import com.googlecode.jmxtrans.util.JmxUtils;
+import com.googlecode.jmxtrans.util.JsonPrinter;
 
 /**
  * This example shows how to query an ActiveMQ server for some information.
@@ -18,6 +18,8 @@ import com.googlecode.jmxtrans.util.JmxUtils;
  * @author jon
  */
 public class ActiveMQ2 {
+
+	private static final JsonPrinter jsonPrinter = new JsonPrinter(System.out);
 
 	/** */
 	public static void main(String[] args) throws Exception {
@@ -65,7 +67,7 @@ public class ActiveMQ2 {
 		server.addQuery(q2);
 
 		JmxProcess process = new JmxProcess(server);
-		JmxUtils.prettyPrintJson(process);
+		jsonPrinter.prettyPrint(process);
 
 		JmxTransformer transformer = new JmxTransformer();
 		transformer.executeStandalone(process);

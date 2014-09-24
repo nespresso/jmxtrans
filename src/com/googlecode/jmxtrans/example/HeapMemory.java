@@ -4,7 +4,8 @@ import java.io.File;
 
 import com.googlecode.jmxtrans.JmxTransformer;
 import com.googlecode.jmxtrans.model.JmxProcess;
-import com.googlecode.jmxtrans.util.JmxUtils;
+import com.googlecode.jmxtrans.util.JsonPrinter;
+import com.googlecode.jmxtrans.util.JsonUtils;
 
 /**
  * Shows how to process a file.
@@ -18,8 +19,8 @@ public class HeapMemory {
      */
 	public static void main(String[] args) throws Exception {
 
-		JmxProcess process = JmxUtils.getJmxProcess(new File("heapmemory.json"));
-		JmxUtils.printJson(process);
+		JmxProcess process = JsonUtils.getJmxProcess(new File("heapmemory.json"));
+		new JsonPrinter(System.out).print(process);
 
 		JmxTransformer transformer = new JmxTransformer();
 		transformer.executeStandalone(process);

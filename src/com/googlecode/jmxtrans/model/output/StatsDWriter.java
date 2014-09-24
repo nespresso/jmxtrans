@@ -1,5 +1,10 @@
 package com.googlecode.jmxtrans.model.output;
 
+import org.apache.commons.pool.KeyedObjectPool;
+import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -8,11 +13,6 @@ import java.nio.channels.DatagramChannel;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.apache.commons.pool.KeyedObjectPool;
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.googlecode.jmxtrans.jmx.ManagedGenericKeyedObjectPool;
 import com.googlecode.jmxtrans.jmx.ManagedObject;
@@ -23,6 +23,7 @@ import com.googlecode.jmxtrans.util.BaseOutputWriter;
 import com.googlecode.jmxtrans.util.DatagramSocketFactory;
 import com.googlecode.jmxtrans.util.JmxUtils;
 import com.googlecode.jmxtrans.util.LifecycleException;
+import com.googlecode.jmxtrans.util.NumberUtils;
 import com.googlecode.jmxtrans.util.ValidationException;
 
 /**
@@ -53,18 +54,19 @@ public class StatsDWriter extends BaseOutputWriter {
 
 	/**
 	 * Uses JmxUtils.getDefaultPoolMap()
+	 *
 	 * @throws IOException
 	 */
 	public StatsDWriter() throws IOException {
 		channel = DatagramChannel.open();
-        setBufferSize((short) 1500);
+		setBufferSize((short) 1500);
 	}
-	
+
 	public synchronized void setBufferSize(short packetBufferSize) {
-        if(sendBuffer != null) {
-                flush();
-        }
-        sendBuffer = ByteBuffer.allocate(packetBufferSize);
+		if (sendBuffer != null) {
+			flush();
+		}
+		sendBuffer = ByteBuffer.allocate(packetBufferSize);
 	}
 
 
@@ -114,7 +116,13 @@ public class StatsDWriter extends BaseOutputWriter {
 			rootPrefix = rootPrefixTmp;
 		}
 
-		this.address = new InetSocketAddress(host, port);
+		// Read access to 'address' are synchronized. I'm not yet completely
+		// clear on the threading model used by JmxTrans, we might be able to
+		// reduce the number of locks. Still this synchronized block will not
+		// be expensive and at least ensure correctness of code.
+		synchronized (this) {
+			this.address = new InetSocketAddress(host, port);
+		}
 
 		if (this.getSettings().containsKey(BUCKET_TYPE))
 			bucketType = (String) this.getSettings().get(BUCKET_TYPE);
@@ -132,7 +140,7 @@ public class StatsDWriter extends BaseOutputWriter {
 			Map<String, Object> resultValues = result.getValues();
 			if (resultValues != null) {
 				for (Entry<String, Object> values : resultValues.entrySet()) {
-					if (JmxUtils.isNumeric(values.getValue())) {
+					if (NumberUtils.isNumeric(values.getValue())) {
 						StringBuilder sb = new StringBuilder();
 
 						sb.append(JmxUtils.getKeyString(query, result, values, typeNames, rootPrefix));
@@ -167,7 +175,7 @@ public class StatsDWriter extends BaseOutputWriter {
 			}
 
 			if (sendBuffer.position() > 0) { // multiple metrics are separated
-												// by '\n'
+				// by '\n'
 				sendBuffer.put((byte) '\n');
 			}
 
