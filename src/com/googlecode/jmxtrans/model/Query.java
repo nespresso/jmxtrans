@@ -132,6 +132,7 @@ public class Query {
 		this.keys.add(key);
 	}
 
+	@JsonIgnore
 	public boolean isAllowDottedKeys() {
 		return allowDottedKeys;
 	}

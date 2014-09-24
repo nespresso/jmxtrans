@@ -1,23 +1,5 @@
 package com.googlecode.jmxtrans.util;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.pool.KeyedObjectPool;
-import org.apache.commons.pool.KeyedPoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.management.AttributeList;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
-import javax.naming.Context;
 import java.lang.management.ManagementFactory;
 import java.rmi.UnmarshalException;
 import java.util.ArrayList;
@@ -31,6 +13,26 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javax.management.AttributeList;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanInfo;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import javax.naming.Context;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.pool.KeyedObjectPool;
+import org.apache.commons.pool.KeyedPoolableObjectFactory;
+import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.googlecode.jmxtrans.OutputWriter;
 import com.googlecode.jmxtrans.jmx.JmxResultProcessor;
 import com.googlecode.jmxtrans.jmx.ManagedObject;
@@ -41,7 +43,7 @@ import com.googlecode.jmxtrans.model.Server;
 
 /**
  * The worker code.
- *
+ * 
  * @author jon
  */
 public class JmxUtils {
@@ -184,7 +186,6 @@ public class JmxUtils {
 					if (log.isDebugEnabled()) {
 						log.debug("Executing queryName: " + queryName.getCanonicalName() + " from query: " + query);
 					}
-
 
 					AttributeList al = mbeanServer.getAttributes(queryName, attributes.toArray(new String[attributes.size()]));
 
@@ -348,15 +349,21 @@ public class JmxUtils {
 		else
 			mbeanServer = conn.getMBeanServerConnection();
 
+		final StopWatch stopwatch = new StopWatch();
+		stopwatch.start();
 		JmxUtils.processQueriesForServer(mbeanServer, server);
+		stopwatch.stop();
+		log.info(String.format("Query execution for server %s took %d millis", server.getAlias(), stopwatch.getTime()));
 	}
 
 	/**
 	 * Gets the object pool. TODO: Add options to adjust the pools, this will be
 	 * better performance on high load
-	 *
-	 * @param <T>     the generic type
-	 * @param factory the factory
+	 * 
+	 * @param <T>
+	 *            the generic type
+	 * @param factory
+	 *            the factory
 	 * @return the object pool
 	 */
 	public static <T extends KeyedPoolableObjectFactory> GenericKeyedObjectPool getObjectPool(T factory) {
@@ -392,9 +399,11 @@ public class JmxUtils {
 
 	/**
 	 * Register the scheduler in the local MBeanServer.
-	 *
-	 * @param mbean the mbean
-	 * @throws Exception the exception
+	 * 
+	 * @param mbean
+	 *            the mbean
+	 * @throws Exception
+	 *             the exception
 	 */
 	public static void registerJMX(ManagedObject mbean) throws Exception {
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -403,9 +412,11 @@ public class JmxUtils {
 
 	/**
 	 * Unregister the scheduler from the local MBeanServer.
-	 *
-	 * @param mbean the mbean
-	 * @throws Exception the exception
+	 * 
+	 * @param mbean
+	 *            the mbean
+	 * @throws Exception
+	 *             the exception
 	 */
 	public static void unregisterJMX(ManagedObject mbean) throws Exception {
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -414,12 +425,17 @@ public class JmxUtils {
 
 	/**
 	 * Gets the key string.
-	 *
-	 * @param query      the query
-	 * @param result     the result
-	 * @param values     the values
-	 * @param typeNames  the type names
-	 * @param rootPrefix the root prefix
+	 * 
+	 * @param query
+	 *            the query
+	 * @param result
+	 *            the result
+	 * @param values
+	 *            the values
+	 * @param typeNames
+	 *            the type names
+	 * @param rootPrefix
+	 *            the root prefix
 	 * @return the key string
 	 */
 	public static String getKeyString(Query query, Result result, Entry<String, Object> values, List<String> typeNames, String rootPrefix) {
@@ -437,11 +453,15 @@ public class JmxUtils {
 
 	/**
 	 * Gets the key string, without rootPrefix nor Alias
-	 *
-	 * @param query     the query
-	 * @param result    the result
-	 * @param values    the values
-	 * @param typeNames the type names
+	 * 
+	 * @param query
+	 *            the query
+	 * @param result
+	 *            the result
+	 * @param values
+	 *            the values
+	 * @param typeNames
+	 *            the type names
 	 * @return the key string
 	 */
 	public static String getKeyString(Query query, Result result, Entry<String, Object> values, List<String> typeNames) {
@@ -455,11 +475,15 @@ public class JmxUtils {
 
 	/**
 	 * Gets the key string, with dot allowed
-	 *
-	 * @param query     the query
-	 * @param result    the result
-	 * @param values    the values
-	 * @param typeNames the type names
+	 * 
+	 * @param query
+	 *            the query
+	 * @param result
+	 *            the result
+	 * @param values
+	 *            the values
+	 * @param typeNames
+	 *            the type names
 	 * @return the key string
 	 */
 	public static String getKeyStringWithDottedKeys(Query query, Result result, Entry<String, Object> values, List<String> typeNames) {
@@ -499,7 +523,8 @@ public class JmxUtils {
 	}
 
 	private static void addTypeName(Query query, Result result, List<String> typeNames, StringBuilder sb) {
-		String typeName = com.googlecode.jmxtrans.util.StringUtils.cleanupStr(getConcatedTypeNameValues(query, typeNames, result.getTypeName()), query.isAllowDottedKeys());
+		String typeName = com.googlecode.jmxtrans.util.StringUtils.cleanupStr(getConcatedTypeNameValues(query, typeNames, result.getTypeName()),
+				query.isAllowDottedKeys());
 		if (typeName != null && typeName.length() > 0) {
 			sb.append(typeName);
 			sb.append(".");
@@ -534,9 +559,11 @@ public class JmxUtils {
 	 * <p/>
 	 * If you addTypeName("name"), then it'll retrieve 'PS Eden Space' from the
 	 * string
-	 *
-	 * @param typeNames   the type names
-	 * @param typeNameStr the type name str
+	 * 
+	 * @param typeNames
+	 *            the type names
+	 * @param typeNameStr
+	 *            the type name str
 	 * @return the concated type name values
 	 */
 	public static String getConcatedTypeNameValues(List<String> typeNames, String typeNameStr) {
@@ -556,17 +583,17 @@ public class JmxUtils {
 	}
 
 	/**
-	 * Given a typeName string, create a Map with every key and value in the typeName.
-	 * For example:
+	 * Given a typeName string, create a Map with every key and value in the
+	 * typeName. For example:
 	 * <p/>
 	 * typeName=name=PS Eden Space,type=MemoryPool
 	 * <p/>
 	 * Returns a Map with the following key/value pairs (excluding the quotes):
 	 * <p/>
-	 * "name"  =>  "PS Eden Space"
-	 * "type"  =>  "MemoryPool"
-	 *
-	 * @param typeNameStr the type name str
+	 * "name" => "PS Eden Space" "type" => "MemoryPool"
+	 * 
+	 * @param typeNameStr
+	 *            the type name str
 	 * @return Map<String, String> of type-name-key / value pairs.
 	 */
 	public static Map<String, String> getTypeNameValueMap(String typeNameStr) {
@@ -594,10 +621,13 @@ public class JmxUtils {
 	 * <p/>
 	 * If you addTypeName("name"), then it'll retrieve 'PS Eden Space' from the
 	 * string
-	 *
-	 * @param query     the query
-	 * @param typeNames the type names
-	 * @param typeName  the type name
+	 * 
+	 * @param query
+	 *            the query
+	 * @param typeNames
+	 *            the type names
+	 * @param typeName
+	 *            the type name
 	 * @return the concated type name values
 	 */
 	public static String getConcatedTypeNameValues(Query query, List<String> typeNames, String typeName) {
@@ -616,12 +646,14 @@ public class JmxUtils {
 	}
 
 	/**
-	 * Given a single type-name-key and value from a typename strig (e.g. "type=MemoryPool"), extract the key and
-	 * the value and return both.
-	 *
-	 * @param typeNameToken - the string containing the pair.
-	 * @return String[2] where String[0] = the key and String[1] = the value.  If the given string is not in the
-	 * format "key=value" then String[0] = the original string and String[1] = "".
+	 * Given a single type-name-key and value from a typename strig (e.g.
+	 * "type=MemoryPool"), extract the key and the value and return both.
+	 * 
+	 * @param typeNameToken
+	 *            - the string containing the pair.
+	 * @return String[2] where String[0] = the key and String[1] = the value. If
+	 *         the given string is not in the format "key=value" then String[0]
+	 *         = the original string and String[1] = "".
 	 */
 	private static String[] splitTypeNameValue(String typeNameToken) {
 		String[] result;
